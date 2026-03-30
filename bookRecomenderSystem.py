@@ -25,7 +25,7 @@ number_rating.rename(columns={'rating':'numofrating'},inplace=True)
 
 final_rating=ratings_with_books.merge(number_rating,on='Title')
 
-final_rating=final_rating[final_rating['numofrating']>=50]
+final_rating=final_rating[final_rating['numofrating']>=5]
 
 book_pivot=final_rating.pivot_table(columns='userid',index='Title',values='rating') #creates pivot table
 
@@ -37,6 +37,37 @@ model=NearestNeighbors(algorithm='brute') # nearest neighbour model
 
 model.fit(book_sparse) #model training
 
+# ---------------- RECOMMENDATION PART ---------------- #
 
-print(book_pivot)
+# function to recommend books
+def recommend(book_name):
+    
+    # check if book exists in pivot table
+    if book_name not in book_pivot.index:
+        print("Book not found in dataset ")
+        return
+    
+    # get index of the book
+    book_id = np.where(book_pivot.index == book_name)[0][0]
+    
+    # find nearest neighbors (similar books)
+    distances, suggestions = model.kneighbors(book_pivot.iloc[book_id, :].values.reshape(1, -1), n_neighbors=6)
+    
+    print("\n Recommended Books:\n")
+    
+    # loop through suggestions (skip first because it's the same book)
+    for i in range(1, len(suggestions[0])):
+        print(book_pivot.index[suggestions[0][i]])  # print book title
+
+
+# ---------------- USER INPUT PART ---------------- #
+
+while True:
+    user_input = input("\nEnter a book name (or type 'exit' to quit): ")
+    
+    if user_input.lower() == 'exit':
+        print("Goodbye 👋")
+        break
+    
+    recommend(user_input)  # call recommendation function
 
